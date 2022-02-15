@@ -4,82 +4,106 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class TransactionController extends Controller
 {
+    public $btc_base = "http://localhost:5000/";
     /**
      * Display a listing of the resource.
+     * get all transactions
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        global $btc_base;
+        $fields = $request->validate([
+            'wallet_name' => 'nullable|string',
+            'label' => 'nullable|string',
+            'count' => 'numeric|nullable',
+            'skip' => 'nullable|numeric'
+        ]);
+
+        $response = Http::withBody(json_encode([
+            'wallet_name' => $fields['wallet_name'] ?? '',
+            'label' => $fields['label'] ?? '*',
+            'count' => (int) $fields['count'] ?? 100,
+            'skip' => (int) $fields['skip'] ?? 0
+        ]),'application/json')->get('http://localhost:5000/wallet/tx/list');
+
+        if($response->status() == 200){
+            return response($response->body(),200)->header('Content-Type', 'application/json');
+        }else{
+            return response($response->body(),500)->header('Content-Type', 'application/json');
+        }
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
+     * send a transction
      */
-    public function create()
-    {
-        //
+    public function send(Request $request){
+        global $btc_base;
+        $fields = $request->validate([
+            'wallet_name' => 'nullable|string',
+            'reciever_address' => 'required|string',
+            'amount' => 'required|string',
+            'rx_name' => 'nullable|string',
+            'tx_desc' => 'nullable|string',
+            'subtract_fee' => 'nullable',
+        ]);
+
+        $response = Http::withBody(json_encode([
+            'wallet_name' => $fields['wallet_name'] ?? '',
+            'reciever_address' => $fields['reciever_address'],
+            'amount' => $fields['amount'],
+            'reciever_name' => $fields['rx_name'] ?? '',
+            'description' => $fields['tx_desc'] ?? '',
+            'subtract_fee' => $fields['subtract_fee'] ?? false,
+            'passphrase' => 'just anchor glance brown person liquid pair joy word clip effort broccoli'
+        ]),'application/json')->post('http://localhost:5000/wallet/send');
+
+        if($response->status() == 200){
+            //$tx = Transaction::create($response->body());
+            return response($response->body(),200)->header('Content-Type', 'application/json');
+        }else{
+            return response($response->body(),500)->header('Content-Type', 'application/json');
+        }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
+    public function recieve(Request $request){
+        $fields = $request->validate([
+            'wallet_name' => 'nullable|string',
+            'label' => 'nullable|string'
+        ]);
+
+        $response = Http::withBody(json_encode([
+            'wallet_name' => $fields['wallet_name'] ?? '',
+            'label' => $fields['label'] ?? ''
+        ]),'application/json')->get('localhost:5000/wallet/get-address');
+
+        if($response->status() == 200){
+            return response($response->body(),200)->header('Content-Type','application/json');
+        }else{
+            return response($response->body(),200)->header('Content-Type','applicaion/json');
+        }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Transaction  $transaction
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Transaction $transaction)
-    {
-        //
-    }
+    public function tx_status(Request $request){
+        $fields = $request->validate([
+            'wallet_name' => 'nullable|string',
+            'tx_id' => 'required|string'
+        ]);
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Transaction  $transaction
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Transaction $transaction)
-    {
-        //
-    }
+        $response = Http::withBody(json_encode([
+            'wallet_name' => $fields['wallet_name'] ?? '',
+            'tx_id' => $fields['tx_id']
+        ]),'application/json')->get("localhost:5000/wallet/tx/status");
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Transaction  $transaction
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Transaction $transaction)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Transaction  $transaction
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Transaction $transaction)
-    {
-        //
+        if($response->status() == 200){
+            return response($response->body(),200)->header('Content-Type','application/json');
+        }else{
+            return response($response->body(),200)->header('Content-Type','application/json');
+        }
     }
 }
