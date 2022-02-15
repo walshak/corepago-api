@@ -20,10 +20,13 @@ use App\Http\Controllers\WalletController;
 Route::post('/register', [AuthController::class,'register']);
 Route::post('/login', [AuthController::class,'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class,'logout']);
-Route::get('/btc/wallet/tx/list', [TransactionController::class, 'index']);
-Route::post('/btc/wallet/send',[TransactionController::class,'send']);
-Route::get('/btc/wallet/recieve',[TransactionController::class,'recieve']);
-Route::get('/btc/wallet/tx/status',[TransactionController::class,'tx_status']);
+Route::get('/btc/wallet/tx/list', [TransactionController::class, 'index'])->middleware(['auth:sanctum']);
+Route::post('/btc/wallet/send',[TransactionController::class,'send'])->middleware(['auth:sanctum']);
+Route::get('/btc/wallet/recieve',[TransactionController::class,'recieve'])->middleware(['auth:sanctum']);
+Route::get('/btc/wallet/tx/status',[TransactionController::class,'tx_status'])->middleware(['auth:sanctum']);
+Route::get('/btc/wallet/list',[WalletController::class,'index'])->middleware(['auth:sanctum']);
+Route::post('/btc/wallet/create',[WalletController::class,'create'])->middleware(['auth:sanctum']);
+Route::get('/btc/wallet/info',[WalletController::class,'show'])->middleware(['auth:sanctum']);
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
