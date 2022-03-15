@@ -80,4 +80,8 @@ class WalletController extends Controller
             return response($reponse->body(),500)->header('Content-Type','application/json');
         }
     }
+
+    public function wallet_history(){
+        return view('history');
+    }
 }

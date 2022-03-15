@@ -46,7 +46,7 @@ class TransactionController extends Controller
         global $btc_base;
         $fields = $request->validate([
             'wallet_name' => 'nullable|string',
-            'reciever_address' => 'required|string',
+            'receiver_address' => 'required|string',
             'amount' => 'required|string',
             'rx_name' => 'nullable|string',
             'tx_desc' => 'nullable|string',
@@ -55,9 +55,9 @@ class TransactionController extends Controller
 
         $response = Http::withBody(json_encode([
             'wallet_name' => $fields['wallet_name'] ?? '',
-            'reciever_address' => $fields['reciever_address'],
+            'receiver_address' => $fields['receiver_address'],
             'amount' => $fields['amount'],
-            'reciever_name' => $fields['rx_name'] ?? '',
+            'receiver_name' => $fields['rx_name'] ?? '',
             'description' => $fields['tx_desc'] ?? '',
             'subtract_fee' => $fields['subtract_fee'] ?? false,
             'passphrase' => 'just anchor glance brown person liquid pair joy word clip effort broccoli'
@@ -71,21 +71,39 @@ class TransactionController extends Controller
         }
     }
 
-    public function recieve(Request $request){
-        $fields = $request->validate([
-            'wallet_name' => 'nullable|string',
-            'label' => 'nullable|string'
-        ]);
+    public function receive(Request $request){
+        if($request->ajax()){
+            $fields = $request->validate([
+                'wallet_name' => 'nullable|string',
+                'label' => 'nullable|string'
+            ]);
 
-        $response = Http::withBody(json_encode([
-            'wallet_name' => $fields['wallet_name'] ?? '',
-            'label' => $fields['label'] ?? ''
-        ]),'application/json')->get('localhost:5000/wallet/get-address');
+            $response = Http::withBody(json_encode([
+                'wallet_name' => $fields['wallet_name'] ?? '',
+                'label' => $fields['label'] ?? ''
+            ]),'application/json')->get('localhost:5000/wallet/get-address');
 
-        if($response->status() == 200){
-            return response($response->body(),200)->header('Content-Type','application/json');
+            if($response->status() == 200){
+                return response($response->body(),200)->header('Content-Type','application/json');
+            }else{
+                return response($response->body(),200)->header('Content-Type','applicaion/json');
+            }
         }else{
-            return response($response->body(),200)->header('Content-Type','applicaion/json');
+            $fields = $request->validate([
+                'wallet_name' => 'nullable|string',
+                'label' => 'nullable|string'
+            ]);
+
+            $response = Http::withBody(json_encode([
+                'wallet_name' => $fields['wallet_name'] ?? '',
+                'label' => $fields['label'] ?? ''
+            ]),'application/json')->get('localhost:5000/wallet/get-address');
+
+            if($response->status() == 200){
+                return view('recieve',json_decode($response->body()));
+            }else{
+                return view('recieve',json_encode($response->body()));
+            }
         }
     }
 
@@ -106,4 +124,14 @@ class TransactionController extends Controller
             return response($response->body(),200)->header('Content-Type','application/json');
         }
     }
+
+    public function receive_form(){
+        return view('recieve');
+    }
+
+    public function send_form(){
+        return view('send');
+    }
+
+
 }
